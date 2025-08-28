@@ -6011,6 +6011,16 @@ void handleChartData(AsyncWebServerRequest *request) {
   snprintf(buffer, sizeof(buffer), "%.1f", SetpointDampf);
   response->print(buffer);
 
+  // Zusätzliche Felder für Flow-Chart (nur ESP32): aktuelles Gewicht und Shot-Status
+#ifdef ESP32
+  response->print(F(",\"shotactive\":"));
+  response->print(shotActive ? F("true") : F("false"));
+
+  response->print(F(",\"weight\":"));
+  snprintf(buffer, sizeof(buffer), "%.1f", currentWeightReading);
+  response->print(buffer);
+#endif
+
   response->print(F("}"));
   request->send(response);
 }
@@ -6159,6 +6169,142 @@ static const char chartsHtml_SelectorsUI[] PROGMEM = R"rawliteral(
 
 
 // Teil 4: Chart.js Code (Unverändert zur letzten Version)
+#ifdef ESP32
+static const char chartsHtml_ChartJSCode[] PROGMEM = R"rawliteral(
+  const ctx = document.getElementById('combinedChart').getContext('2d');
+  let currentSetpointDampf = 0; let currentSetpointWasser = 0;
+const wasserColor = '#00AEEF';
+const dampfColor = '#F7941D';
+const setpointWasserColor = 'rgba(0, 174, 239, 0.7)';
+const setpointDampfColor = 'rgba(247, 148, 29, 0.7)';
+const flowColor = '#2ECC71';
+const gridColor = 'rgba(255, 255, 255, 0.1)';
+const textColor = '#E0E0E0';
+  let lastWeight = null; let lastTimeMs = null;
+  let maxDataPoints = parseInt(document.getElementById('datapointLimit').value, 10) || 100;
+  const combinedChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label: 'Wasser IST', data: [], borderColor: wasserColor, backgroundColor: 'rgba(0, 174, 239, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: wasserColor },
+        { label: 'Dampf IST',  data: [], borderColor: dampfColor,   backgroundColor: 'rgba(247, 148, 29, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: dampfColor },
+        { label: 'Wasser SOLL', data: [], borderColor: setpointWasserColor, borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 },
+        { label: 'Dampf SOLL',  data: [], borderColor: setpointDampfColor,  borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 },
+        { label: 'Flow-Rate',   data: [], borderColor: flowColor,   backgroundColor: 'rgba(46, 204, 113, 0.08)', borderWidth: 2, fill: false, tension: 0.35, pointRadius: 0, yAxisID: 'y1', hidden: true }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { intersect: false, mode: 'index' },
+      scales: {
+        x: { type: 'category', title: { display: true, text: 'Uhrzeit', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: gridColor, drawBorder: false } },
+        y: { suggestedMin: 0, suggestedMax: 180, title: { display: true, text: 'Temperatur (°C)', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, stepSize: 20, callback: function(value){ return value + ' °C'; } }, grid: { color: gridColor, drawBorder: false } },
+        y1: { position: 'right', suggestedMin: 0, suggestedMax: 8, title: { display: true, text: 'Flow-Rate (g/s)', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, stepSize: 1, callback: function(value){ return value + ' g/s'; } }, grid: { drawOnChartArea: false, color: gridColor, drawBorder: false } }
+      },
+      plugins: {
+        legend: { position: 'bottom', align: 'center', labels: { color: textColor, font: { size: 12 }, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 15, padding: 15 } },
+        tooltip: {
+          enabled: true, mode: 'index', intersect: false,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)', titleColor: '#ffffff', titleFont: { size: 13, weight: 'bold' },
+          bodyColor: '#dddddd', bodyFont: { size: 12 }, bodySpacing: 4,
+          borderColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4,
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) { label += ': '; }
+              if (context.parsed.y !== null) {
+                if (context.dataset.yAxisID === 'y1') { label += context.parsed.y.toFixed(2) + ' g/s'; }
+                else { label += context.parsed.y.toFixed(1) + ' °C'; }
+              }
+              return label;
+            }
+          }
+        }
+      }
+    }
+  });
+  let updateInterval = parseInt(document.getElementById('updateRate').value, 10) || 15000; let intervalId = null;
+  function fetchData() {
+    fetch('/Chart-Daten')
+      .then(response => { if (!response.ok) { console.error('Netzwerkantwort war nicht ok:', response.statusText); throw new Error('Network response was not ok'); } return response.json(); })
+      .then(data => {
+        if (data.setpointwasser !== undefined) currentSetpointWasser = data.setpointwasser;
+        if (data.setpointdampf !== undefined) currentSetpointDampf = data.setpointdampf;
+
+        const now = new Date();
+        const nowMs = now.getTime();
+        const timeLabel = now.toLocaleTimeString('de-DE');
+        const labels = combinedChart.data.labels;
+        const datasets = combinedChart.data.datasets;
+
+        // Flow-Rate nur bei aktivem Bezug berechnen
+        let flow = null;
+        if (data.shotactive === true) {
+          if (lastWeight !== null && lastTimeMs !== null) {
+            const dt = (nowMs - lastTimeMs) / 1000.0;
+            if (dt > 0.2) { // gegen Division durch sehr kleine dt absichern
+              const dw = (typeof data.weight === 'number' ? data.weight : parseFloat(data.weight)) - lastWeight;
+              flow = Math.max(0, dw / dt);
+            }
+          }
+          datasets[4].hidden = false;
+        } else {
+          datasets[4].hidden = true;
+          // Reset Startpunkt, damit der nächste Bezug sauber startet
+          lastWeight = null; lastTimeMs = null;
+        }
+
+        // Labels + Datenpunkte schieben
+        labels.push(timeLabel);
+        datasets[0].data.push(data.wasser);
+        datasets[1].data.push(data.dampf);
+        datasets[2].data.push(currentSetpointWasser);
+        datasets[3].data.push(currentSetpointDampf);
+        datasets[4].data.push(flow !== null ? flow : null);
+
+        // Auf maxDataPoints begrenzen
+        while (labels.length > maxDataPoints) {
+          labels.shift();
+          datasets.forEach(ds => { ds.data.shift(); });
+        }
+
+        combinedChart.update('none');
+
+        // letzten Messpunkt merken (nach Update)
+        if (typeof data.weight === 'number') { lastWeight = data.weight; }
+        else if (data.weight !== undefined) { lastWeight = parseFloat(data.weight); }
+        lastTimeMs = nowMs;
+      })
+      .catch(err => { console.error('Fehler beim Abrufen der Daten:', err); });
+  }
+  function startFetching() { if (intervalId) { clearInterval(intervalId); intervalId = null; } fetchData(); intervalId = setInterval(fetchData, updateInterval); console.log(`Chart-Aktualisierung gestartet: Intervall ${updateInterval / 1000} Sekunden.`); }
+  document.getElementById('updateRate').addEventListener('change', function(event) { const newInterval = parseInt(event.target.value, 10); if (!isNaN(newInterval) && newInterval > 0) { updateInterval = newInterval; startFetching(); } });
+  document.getElementById('datapointLimit').addEventListener('change', function(event) { const newLimit = parseInt(event.target.value, 10); if (!isNaN(newLimit) && newLimit > 0) { maxDataPoints = newLimit; console.log(`Maximale Datenpunkte geändert auf: ${maxDataPoints}`); } });
+  const fullscreenBtn = document.getElementById('chart-fullscreen-btn');
+  const bodyElement = document.body;
+  const enterFsIcon = `
+   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+     <path d="M7 3H3v4h2V5h2V3zm14 0h-4v2h2v2h2V3zM5 17H3v4h4v-2H5v-2zm16 0h-2v2h-2v2h4v-4z"/>
+   </svg>`;
+  const exitFsIcon = `
+   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+     <path d="M3 7h4V5H5V3H3v4zm18-4h-4v2h2v2h2V3zM3 21h4v-2H5v-2H3v4zm18-4h-2v2h-2v2h4v-4z"/>
+   </svg>`;
+  fullscreenBtn.innerHTML = enterFsIcon;
+  fullscreenBtn.addEventListener('click', () => {
+    bodyElement.classList.toggle('chart-fullscreen-active');
+    const isFs = bodyElement.classList.contains('chart-fullscreen-active');
+    fullscreenBtn.innerHTML = isFs ? exitFsIcon : enterFsIcon;
+    fullscreenBtn.setAttribute('aria-label', isFs ? 'Vollbild verlassen' : 'Vollbild');
+    fullscreenBtn.setAttribute('title', isFs ? 'Vollbild verlassen' : 'Vollbild');
+    setTimeout(() => { if (typeof combinedChart !== 'undefined' && combinedChart) { combinedChart.resize(); } }, 50);
+  });
+  startFetching();
+)rawliteral";
+#else
 static const char chartsHtml_ChartJSCode[] PROGMEM = R"rawliteral(
   const ctx = document.getElementById('combinedChart').getContext('2d');
   let currentSetpointDampf = 0; let currentSetpointWasser = 0;
@@ -6169,37 +6315,91 @@ const setpointDampfColor = 'rgba(247, 148, 29, 0.7)';
 const gridColor = 'rgba(255, 255, 255, 0.1)';
 const textColor = '#E0E0E0';
   let maxDataPoints = parseInt(document.getElementById('datapointLimit').value, 10) || 100;
-  const combinedChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [ { label: 'Wasser IST', data: [], borderColor: wasserColor, backgroundColor: 'rgba(0, 174, 239, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: wasserColor }, { label: 'Dampf IST', data: [], borderColor: dampfColor, backgroundColor: 'rgba(247, 148, 29, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: dampfColor }, { label: 'Wasser SOLL', data: [], borderColor: setpointWasserColor, borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 }, { label: 'Dampf SOLL', data: [], borderColor: setpointDampfColor, borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 } ] }, options: { responsive: true, maintainAspectRatio: false, animation: false, interaction: { intersect: false, mode: 'index' }, scales: { x: { type: 'category', title: { display: true, text: 'Uhrzeit', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: gridColor, drawBorder: false } }, y: { suggestedMin: 0, suggestedMax: 180, title: { display: true, text: 'Temperatur (°C)', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, stepSize: 20, callback: function(value, index, values) { return value + ' °C'; } }, grid: { color: gridColor, drawBorder: false } } }, plugins: { legend: { position: 'bottom', align: 'center', labels: { color: textColor, font: { size: 12 }, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 15, padding: 15 } }, tooltip: { enabled: true, mode: 'index', intersect: false, backgroundColor: 'rgba(0, 0, 0, 0.85)', titleColor: '#ffffff', titleFont: { size: 13, weight: 'bold' }, bodyColor: '#dddddd', bodyFont: { size: 12 }, bodySpacing: 4, borderColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4, callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) { label += ': '; } if (context.parsed.y !== null) { label += context.parsed.y.toFixed(1) + ' °C'; } return label; } } } } } });
+  const combinedChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label: 'Wasser IST', data: [], borderColor: wasserColor, backgroundColor: 'rgba(0, 174, 239, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: wasserColor },
+        { label: 'Dampf IST',  data: [], borderColor: dampfColor,   backgroundColor: 'rgba(247, 148, 29, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: dampfColor },
+        { label: 'Wasser SOLL', data: [], borderColor: setpointWasserColor, borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 },
+        { label: 'Dampf SOLL',  data: [], borderColor: setpointDampfColor,  borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { intersect: false, mode: 'index' },
+      scales: {
+        x: { type: 'category', title: { display: true, text: 'Uhrzeit', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: gridColor, drawBorder: false } },
+        y: { suggestedMin: 0, suggestedMax: 180, title: { display: true, text: 'Temperatur (\u00B0C)', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, stepSize: 20, callback: function(value){ return value + ' \u00B0C'; } }, grid: { color: gridColor, drawBorder: false } }
+      },
+      plugins: {
+        legend: { position: 'bottom', align: 'center', labels: { color: textColor, font: { size: 12 }, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 15, padding: 15 } },
+        tooltip: {
+          enabled: true, mode: 'index', intersect: false,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)', titleColor: '#ffffff', titleFont: { size: 13, weight: 'bold' },
+          bodyColor: '#dddddd', bodyFont: { size: 12 }, bodySpacing: 4,
+          borderColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4,
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) { label += ': '; }
+              if (context.parsed.y !== null) { label += context.parsed.y.toFixed(1) + ' \u00B0C'; }
+              return label;
+            }
+          }
+        }
+      }
+    }
+  });
   let updateInterval = parseInt(document.getElementById('updateRate').value, 10) || 15000; let intervalId = null;
-  function fetchData() { fetch('/Chart-Daten').then(response => { if (!response.ok) { console.error('Netzwerkantwort war nicht ok:', response.statusText); throw new Error('Network response was not ok'); } return response.json(); }).then(data => { if (data.setpointwasser !== undefined) currentSetpointWasser = data.setpointwasser; if (data.setpointdampf !== undefined) currentSetpointDampf = data.setpointdampf;
-const now = new Date();
-const timeLabel = now.toLocaleTimeString('de-DE');
-const labels = combinedChart.data.labels;
-const datasets = combinedChart.data.datasets; labels.push(timeLabel); datasets[0].data.push(data.wasser); datasets[1].data.push(data.dampf); datasets[2].data.push(currentSetpointWasser); datasets[3].data.push(currentSetpointDampf); while (labels.length > maxDataPoints) { labels.shift(); datasets.forEach(dataset => { dataset.data.shift(); }); } combinedChart.update('none'); }).catch(err => { console.error("Fehler beim Abrufen der Daten:", err); }); }
+  function fetchData() {
+    fetch('/Chart-Daten')
+      .then(response => { if (!response.ok) { console.error('Netzwerkantwort war nicht ok:', response.statusText); throw new Error('Network response was not ok'); } return response.json(); })
+      .then(data => {
+        if (data.setpointwasser !== undefined) currentSetpointWasser = data.setpointwasser;
+        if (data.setpointdampf !== undefined) currentSetpointDampf = data.setpointdampf;
+        const now = new Date();
+        const timeLabel = now.toLocaleTimeString('de-DE');
+        const labels = combinedChart.data.labels;
+        const datasets = combinedChart.data.datasets;
+        labels.push(timeLabel);
+        datasets[0].data.push(data.wasser);
+        datasets[1].data.push(data.dampf);
+        datasets[2].data.push(currentSetpointWasser);
+        datasets[3].data.push(currentSetpointDampf);
+        while (labels.length > maxDataPoints) { labels.shift(); datasets.forEach(ds => { ds.data.shift(); }); }
+        combinedChart.update('none');
+      })
+      .catch(err => { console.error('Fehler beim Abrufen der Daten:', err); });
+  }
   function startFetching() { if (intervalId) { clearInterval(intervalId); intervalId = null; } fetchData(); intervalId = setInterval(fetchData, updateInterval); console.log(`Chart-Aktualisierung gestartet: Intervall ${updateInterval / 1000} Sekunden.`); }
   document.getElementById('updateRate').addEventListener('change', function(event) { const newInterval = parseInt(event.target.value, 10); if (!isNaN(newInterval) && newInterval > 0) { updateInterval = newInterval; startFetching(); } });
   document.getElementById('datapointLimit').addEventListener('change', function(event) { const newLimit = parseInt(event.target.value, 10); if (!isNaN(newLimit) && newLimit > 0) { maxDataPoints = newLimit; console.log(`Maximale Datenpunkte geändert auf: ${maxDataPoints}`); } });
- const fullscreenBtn = document.getElementById('chart-fullscreen-btn');
-const bodyElement = document.body;
- const enterFsIcon = `
+  const fullscreenBtn = document.getElementById('chart-fullscreen-btn');
+  const bodyElement = document.body;
+  const enterFsIcon = `
    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
      <path d="M7 3H3v4h2V5h2V3zm14 0h-4v2h2v2h2V3zM5 17H3v4h4v-2H5v-2zm16 0h-2v2h-2v2h4v-4z"/>
    </svg>`;
- const exitFsIcon = `
+  const exitFsIcon = `
    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
      <path d="M3 7h4V5H5V3H3v4zm18-4h-4v2h2v2h2V3zM3 21h4v-2H5v-2H3v4zm18-4h-2v2h-2v2h4v-4z"/>
    </svg>`;
- fullscreenBtn.innerHTML = enterFsIcon;
- fullscreenBtn.addEventListener('click', () => {
-   bodyElement.classList.toggle('chart-fullscreen-active');
-   const isFs = bodyElement.classList.contains('chart-fullscreen-active');
-   fullscreenBtn.innerHTML = isFs ? exitFsIcon : enterFsIcon;
-   fullscreenBtn.setAttribute('aria-label', isFs ? 'Vollbild verlassen' : 'Vollbild');
-   fullscreenBtn.setAttribute('title', isFs ? 'Vollbild verlassen' : 'Vollbild');
-   setTimeout(() => { if (typeof combinedChart !== 'undefined' && combinedChart) { combinedChart.resize(); } }, 50);
- });
+  fullscreenBtn.innerHTML = enterFsIcon;
+  fullscreenBtn.addEventListener('click', () => {
+    bodyElement.classList.toggle('chart-fullscreen-active');
+    const isFs = bodyElement.classList.contains('chart-fullscreen-active');
+    fullscreenBtn.innerHTML = isFs ? exitFsIcon : enterFsIcon;
+    fullscreenBtn.setAttribute('aria-label', isFs ? 'Vollbild verlassen' : 'Vollbild');
+    fullscreenBtn.setAttribute('title', isFs ? 'Vollbild verlassen' : 'Vollbild');
+    setTimeout(() => { if (typeof combinedChart !== 'undefined' && combinedChart) { combinedChart.resize(); } }, 50);
+  });
   startFetching();
 )rawliteral";
+#endif
 
 // Teil 5: Chunk für den Fehlerfall
 static const char chartsHtml_ErrorBox[] PROGMEM = R"rawliteral(
