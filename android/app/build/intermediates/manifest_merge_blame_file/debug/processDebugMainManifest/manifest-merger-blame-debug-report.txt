@@ -9,11 +9,11 @@
 9        android:targetSdkVersion="34" />
 10
 11    <uses-permission android:name="android.permission.INTERNET" />
-11-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:5:5-67
-11-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:5:22-64
+11-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:5:5-67
+11-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:5:22-64
 12    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-12-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:6:5-79
-12-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:6:22-76
+12-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:6:5-79
+12-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:6:22-76
 13
 14    <permission
 14-->[androidx.core:core:1.13.1] C:\Users\Thomas\.gradle\caches\transforms-4\eecbda8adc5521377f06f41deda43748\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
@@ -27,64 +27,64 @@
 18-->[androidx.core:core:1.13.1] C:\Users\Thomas\.gradle\caches\transforms-4\eecbda8adc5521377f06f41deda43748\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
 19
 20    <application
-20-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:8:5-41:19
+20-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:8:5-41:19
 21        android:allowBackup="true"
-21-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:9:9-35
+21-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:9:9-35
 22        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
 22-->[androidx.core:core:1.13.1] C:\Users\Thomas\.gradle\caches\transforms-4\eecbda8adc5521377f06f41deda43748\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
 23        android:debuggable="true"
 24        android:extractNativeLibs="false"
 25        android:icon="@mipmap/ic_launcher"
-25-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:11:9-43
+25-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:11:9-43
 26        android:label="Dual-PID"
-26-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:10:9-33
+26-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:10:9-33
 27        android:roundIcon="@mipmap/ic_launcher_round"
-27-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:12:9-54
+27-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:12:9-54
 28        android:supportsRtl="true"
-28-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:13:9-35
+28-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:13:9-35
 29        android:theme="@style/Theme.DualPID"
-29-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:15:9-45
+29-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:15:9-45
 30        android:usesCleartextTraffic="true" >
-30-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:14:9-44
+30-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:14:9-44
 31        <activity
-31-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:17:9-20:54
+31-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:17:9-20:54
 32            android:name="black.mueller.pid.ui.SettingsActivity"
-32-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:18:13-48
+32-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:18:13-48
 33            android:exported="false"
-33-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:19:13-37
+33-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:19:13-37
 34            android:label="@string/title_settings" />
-34-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:20:13-51
+34-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:20:13-51
 35        <activity
-35-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:22:9-25:54
+35-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:22:9-25:54
 36            android:name="black.mueller.pid.ui.AppInfoActivity"
-36-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:23:13-47
+36-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:23:13-47
 37            android:exported="false"
-37-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:24:13-37
+37-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:24:13-37
 38            android:label="@string/title_app_info" />
-38-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:25:13-51
+38-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:25:13-51
 39        <activity
-39-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:27:9-30:56
+39-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:27:9-30:56
 40            android:name="black.mueller.pid.ui.OnboardingActivity"
-40-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:28:13-50
+40-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:28:13-50
 41            android:exported="false"
-41-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:29:13-37
+41-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:29:13-37
 42            android:label="@string/title_onboarding" />
-42-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:30:13-53
+42-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:30:13-53
 43        <activity
-43-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:32:9-39:20
+43-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:32:9-39:20
 44            android:name="black.mueller.pid.ui.MainActivity"
-44-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:33:13-44
+44-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:33:13-44
 45            android:exported="true" >
-45-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:34:13-36
+45-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:34:13-36
 46            <intent-filter>
-46-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:35:13-38:29
+46-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:35:13-38:29
 47                <action android:name="android.intent.action.MAIN" />
-47-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:36:17-69
-47-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:36:25-66
+47-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:36:17-69
+47-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:36:25-66
 48
 49                <category android:name="android.intent.category.LAUNCHER" />
-49-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:37:17-77
-49-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\src\main\AndroidManifest.xml:37:27-74
+49-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:37:17-77
+49-->D:\Thomas\Dokumente\GitHub\Dual-PID-Controller\android\app\src\main\AndroidManifest.xml:37:27-74
 50            </intent-filter>
 51        </activity>
 52

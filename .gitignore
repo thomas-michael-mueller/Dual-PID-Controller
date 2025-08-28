@@ -1,0 +1,12 @@
+# Android keystore/secrets (do NOT commit)
+android/keystore/*.jks
+android/keystore/keystore.properties
+android/keystore/*.p12
+
+# Gradle build outputs
+android/**/build/
+
+# IDE
+.idea/
+android/.gradle/
+android/app/.gradle/

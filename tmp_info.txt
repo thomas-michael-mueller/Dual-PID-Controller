@@ -1,0 +1,74 @@
+   1: package black.mueller.pid.ui
+   2: 
+   3: import android.os.Bundle
+   4: import android.view.MotionEvent
+   5: import android.view.ViewGroup
+   6: import androidx.appcompat.app.AppCompatActivity
+   7: import black.mueller.pid.R
+   8: import com.google.android.material.appbar.MaterialToolbar
+   9: 
+  10: class AppInfoActivity : AppCompatActivity() {
+  11:     override fun onCreate(savedInstanceState: Bundle?) {
+  12:         super.onCreate(savedInstanceState)
+  13:         setContentView(R.layout.activity_app_info)
+  14: 
+  15:         val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
+  16:         toolbar.title = getString(R.string.app_name)
+  17:         toolbar.setNavigationIcon(R.drawable.ic_menu_24)
+  18:         val accent = androidx.core.content.ContextCompat.getColor(this, R.color.accent)
+  19:         toolbar.setTitleTextColor(accent)
+  20:         toolbar.navigationIcon?.setTint(accent)
+  21:         toolbar.setNavigationOnClickListener {
+  22:             val intent = android.content.Intent(this, MainActivity::class.java)
+  23:             intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+  24:             intent.putExtra("open_drawer", true)
+  25:             startActivity(intent)
+  26:             finish()
+  27:         }
+  28: 
+  29:         val pInfo = packageManager.getPackageInfo(packageName, 0)
+  30:         val versionText = findViewById<android.widget.TextView>(R.id.versionText)
+  31:         versionText.text = pInfo.versionName
+  32: 
+  33:         // Linke Rand-Wischgeste: Drawer in MainActivity öffnen
+  34:         enableEdgeSwipeToOpenDrawer()
+  35:     }
+  36: }
+  37: 
+  38: private fun AppInfoActivity.enableEdgeSwipeToOpenDrawer() {
+  39:     val edgeWidthPx = (24 * resources.displayMetrics.density).toInt()
+  40:     val triggerDistancePx = (64 * resources.displayMetrics.density).toInt()
+  41:     var tracking = false
+  42:     var startX = 0f
+  43: 
+  44:     fun openDrawer() {
+  45:         val intent = android.content.Intent(this, MainActivity::class.java)
+  46:         intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+  47:         intent.putExtra("open_drawer", true)
+  48:         startActivity(intent)
+  49:         finish()
+  50:     }
+  51: 
+  52:     val root = (findViewById<ViewGroup>(android.R.id.content).getChildAt(0) ?: return)
+  53:     root.setOnTouchListener { _, ev ->
+  54:         when (ev.actionMasked) {
+  55:             MotionEvent.ACTION_DOWN -> {
+  56:                 tracking = ev.x <= edgeWidthPx
+  57:                 startX = ev.x
+  58:                 false
+  59:             }
+  60:             MotionEvent.ACTION_MOVE -> {
+  61:                 if (tracking && (ev.x - startX) > triggerDistancePx) {
+  62:                     openDrawer()
+  63:                     tracking = false
+  64:                     true
+  65:                 } else false
+  66:             }
+  67:             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+  68:                 tracking = false
+  69:                 false
+  70:             }
+  71:             else -> false
+  72:         }
+  73:     }
+  74: }

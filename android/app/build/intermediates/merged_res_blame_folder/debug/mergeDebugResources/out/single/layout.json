@@ -1,38 +1,30 @@
 [
     {
+        "merged": "black.mueller.pid.app-mergeDebugResources-40:/layout/activity_settings.xml",
+        "source": "black.mueller.pid.app-main-43:/layout/activity_settings.xml"
+    },
+    {
         "merged": "black.mueller.pid.app-mergeDebugResources-40:/layout/activity_onboarding.xml",
         "source": "black.mueller.pid.app-main-43:/layout/activity_onboarding.xml"
     },
     {
-        "merged": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-mergeDebugResources-40:\\layout\\activity_onboarding.xml",
-        "source": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-main-43:\\layout\\activity_onboarding.xml"
+        "merged": "black.mueller.pid.app-mergeDebugResources-40:/layout/fragment_web.xml",
+        "source": "black.mueller.pid.app-main-43:/layout/fragment_web.xml"
+    },
+    {
+        "merged": "black.mueller.pid.app-mergeDebugResources-40:/layout/drawer_header.xml",
+        "source": "black.mueller.pid.app-main-43:/layout/drawer_header.xml"
+    },
+    {
+        "merged": "black.mueller.pid.app-mergeDebugResources-40:/layout/activity_main.xml",
+        "source": "black.mueller.pid.app-main-43:/layout/activity_main.xml"
     },
     {
         "merged": "black.mueller.pid.app-mergeDebugResources-40:/layout/activity_app_info.xml",
         "source": "black.mueller.pid.app-main-43:/layout/activity_app_info.xml"
     },
     {
-        "merged": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-mergeDebugResources-40:\\layout\\item_controller.xml",
-        "source": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-main-43:\\layout\\item_controller.xml"
-    },
-    {
-        "merged": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-mergeDebugResources-40:\\layout\\activity_app_info.xml",
-        "source": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-main-43:\\layout\\activity_app_info.xml"
-    },
-    {
-        "merged": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-mergeDebugResources-40:\\layout\\activity_settings.xml",
-        "source": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-main-43:\\layout\\activity_settings.xml"
-    },
-    {
-        "merged": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-mergeDebugResources-40:\\layout\\activity_main.xml",
-        "source": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-main-43:\\layout\\activity_main.xml"
-    },
-    {
-        "merged": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-mergeDebugResources-40:\\layout\\fragment_web.xml",
-        "source": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-main-43:\\layout\\fragment_web.xml"
-    },
-    {
-        "merged": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-mergeDebugResources-40:\\layout\\drawer_header.xml",
-        "source": "C:\\Users\\Thomas\\.gradle\\daemon\\8.7\\black.mueller.pid.app-main-43:\\layout\\drawer_header.xml"
+        "merged": "black.mueller.pid.app-mergeDebugResources-40:/layout/item_controller.xml",
+        "source": "black.mueller.pid.app-main-43:/layout/item_controller.xml"
     }
 ]

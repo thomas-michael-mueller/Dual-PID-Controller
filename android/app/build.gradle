@@ -15,9 +15,30 @@ android {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
+    // Release-Signing über keystore.properties (aktiviert für Gradle-Builds)
+    def keystoreProps = new Properties()
+    def keystorePropsFile = file("../keystore/keystore.properties")
+    if (keystorePropsFile.exists()) {
+        keystoreProps.load(new FileInputStream(keystorePropsFile))
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreProps.containsKey('storeFile')) {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
+            if (keystorePropsFile.exists()) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
@@ -66,3 +87,4 @@ tasks.register('wrapper', Wrapper) {
 
 // Some IDEs request this legacy task; define a no-op to avoid failures.
 tasks.register('prepareKotlinBuildScriptModel') { }
+

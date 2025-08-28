@@ -1,10 +1,11 @@
 package black.mueller.pid.ui
 
 import android.os.Bundle
-import android.text.InputType
-import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.text.InputType
+import android.view.LayoutInflater
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Spinner
@@ -23,6 +24,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var store: ControllerStore
     private lateinit var list: RecyclerView
     private lateinit var adapter: ControllerAdapter
+    private val edgeSwipe by lazy { EdgeSwipeDrawerDelegate(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +57,14 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<View>(R.id.addController).setOnClickListener { showAddDialog() }
 
         refresh()
+
+        // Linke Rand-Wischgeste: Drawer in MainActivity öffnen
+        enableEdgeSwipeToOpenDrawer()
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (edgeSwipe.onDispatchTouchEvent(ev)) return true
+        return super.dispatchTouchEvent(ev)
     }
 
     private fun refresh() {
@@ -148,6 +158,8 @@ class SettingsActivity : AppCompatActivity() {
         return u.isNotEmpty() && !u.contains(" ")
     }
 }
+
+private fun SettingsActivity.enableEdgeSwipeToOpenDrawer() { /* ersetzt durch EdgeSwipeDrawerDelegate */ }
 
 private class ControllerAdapter(
     val onSetActive: (String) -> Unit,

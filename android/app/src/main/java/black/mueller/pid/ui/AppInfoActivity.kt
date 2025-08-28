@@ -1,11 +1,14 @@
 package black.mueller.pid.ui
 
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import black.mueller.pid.R
 import com.google.android.material.appbar.MaterialToolbar
 
 class AppInfoActivity : AppCompatActivity() {
+    private val edgeSwipe by lazy { EdgeSwipeDrawerDelegate(this) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_app_info)
@@ -28,4 +31,10 @@ class AppInfoActivity : AppCompatActivity() {
         val versionText = findViewById<android.widget.TextView>(R.id.versionText)
         versionText.text = pInfo.versionName
     }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (edgeSwipe.onDispatchTouchEvent(ev)) return true
+        return super.dispatchTouchEvent(ev)
+    }
 }
+

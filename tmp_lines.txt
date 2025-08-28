@@ -1,0 +1,235 @@
+   1: package black.mueller.pid.ui
+   2: 
+   3: import android.os.Bundle
+   4: import android.view.MotionEvent
+   5: import android.view.View
+   6: import android.view.ViewGroup
+   7: import android.text.InputType
+   8: import android.view.LayoutInflater
+   9: import android.widget.EditText
+  10: import android.widget.TextView
+  11: import android.widget.Spinner
+  12: import android.widget.ArrayAdapter
+  13: import androidx.appcompat.app.AlertDialog
+  14: import androidx.appcompat.app.AppCompatActivity
+  15: import androidx.recyclerview.widget.LinearLayoutManager
+  16: import androidx.recyclerview.widget.RecyclerView
+  17: import black.mueller.pid.R
+  18: import black.mueller.pid.data.Controller
+  19: import black.mueller.pid.data.ControllerStore
+  20: import black.mueller.pid.data.EspType
+  21: import com.google.android.material.appbar.MaterialToolbar
+  22: 
+  23: class SettingsActivity : AppCompatActivity() {
+  24:     private lateinit var store: ControllerStore
+  25:     private lateinit var list: RecyclerView
+  26:     private lateinit var adapter: ControllerAdapter
+  27: 
+  28:     override fun onCreate(savedInstanceState: Bundle?) {
+  29:         super.onCreate(savedInstanceState)
+  30:         setContentView(R.layout.activity_settings)
+  31:         store = ControllerStore(this)
+  32: 
+  33:         val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
+  34:         toolbar.title = getString(R.string.app_name)
+  35:         toolbar.setNavigationIcon(R.drawable.ic_menu_24)
+  36:         val accent = androidx.core.content.ContextCompat.getColor(this, R.color.accent)
+  37:         toolbar.setTitleTextColor(accent)
+  38:         toolbar.navigationIcon?.setTint(accent)
+  39:         toolbar.setNavigationOnClickListener {
+  40:             val intent = android.content.Intent(this, MainActivity::class.java)
+  41:             intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+  42:             intent.putExtra("open_drawer", true)
+  43:             startActivity(intent)
+  44:             finish()
+  45:         }
+  46: 
+  47:         list = findViewById(R.id.controllerList)
+  48:         list.layoutManager = LinearLayoutManager(this)
+  49:         adapter = ControllerAdapter(
+  50:             onSetActive = { id -> store.setActiveController(id); refresh() },
+  51:             onEdit = { c -> showEditDialog(c) },
+  52:             onDelete = { id -> store.deleteController(id); refresh() }
+  53:         )
+  54:         list.adapter = adapter
+  55: 
+  56:         findViewById<View>(R.id.addController).setOnClickListener { showAddDialog() }
+  57: 
+  58:         refresh()
+  59: 
+  60:         // Linke Rand-Wischgeste: Drawer in MainActivity öffnen
+  61:         enableEdgeSwipeToOpenDrawer()
+  62:     }
+  63: 
+  64:     private fun refresh() {
+  65:         val items = store.listControllers()
+  66:         adapter.submit(items, store.getActiveControllerId())
+  67:     }
+  68: 
+  69:     private fun showAddDialog() {
+  70:         val content = layoutInflater.inflate(android.R.layout.simple_list_item_2, null)
+  71:         val name = EditText(this).apply { hint = getString(R.string.hint_controller_name) }
+  72:         val url = EditText(this).apply { hint = getString(R.string.hint_controller_url); inputType = InputType.TYPE_TEXT_VARIATION_URI }
+  73:         val espSpinner = Spinner(this).apply {
+  74:             adapter = ArrayAdapter(this@SettingsActivity, android.R.layout.simple_spinner_dropdown_item, listOf(getString(R.string.esp32), getString(R.string.esp8266)))
+  75:         }
+  76:         val container = androidx.appcompat.widget.LinearLayoutCompat(this).apply {
+  77:             orientation = androidx.appcompat.widget.LinearLayoutCompat.VERTICAL
+  78:             setPadding(32, 8, 32, 0)
+  79:             addView(name)
+  80:             addView(url)
+  81:             addView(TextView(this@SettingsActivity).apply { text = getString(R.string.label_esp_type) })
+  82:             addView(espSpinner)
+  83:         }
+  84:         AlertDialog.Builder(this)
+  85:             .setTitle(getString(R.string.action_add_controller))
+  86:             .setView(container)
+  87:             .setPositiveButton(R.string.dialog_save) { d, _ ->
+  88:                 val n = name.text.toString().trim()
+  89:                 val u = url.text.toString().trim()
+  90:                 if (n.isNotEmpty() && isValidUrl(u)) {
+  91:                     val esp = if (espSpinner.selectedItemPosition == 1) EspType.ESP8266 else EspType.ESP32
+  92:                     store.addController(n, u, esp)
+  93:                     refresh()
+  94:                 } else {
+  95:                     android.widget.Toast.makeText(this, R.string.invalid_url, android.widget.Toast.LENGTH_SHORT).show()
+  96:                 }
+  97:                 d.dismiss()
+  98:             }
+  99:             .setNegativeButton(R.string.dialog_cancel, null)
+ 100:             .show()
+ 101:     }
+ 102: 
+ 103:     private fun showEditDialog(controller: Controller) {
+ 104:         val name = EditText(this).apply { hint = getString(R.string.hint_controller_name); setText(controller.name) }
+ 105:         val url = EditText(this).apply { hint = getString(R.string.hint_controller_url); inputType = InputType.TYPE_TEXT_VARIATION_URI; setText(controller.url) }
+ 106:         val espSpinner = Spinner(this).apply {
+ 107:             adapter = ArrayAdapter(this@SettingsActivity, android.R.layout.simple_spinner_dropdown_item, listOf(getString(R.string.esp32), getString(R.string.esp8266)))
+ 108:             setSelection(if (controller.espType == EspType.ESP8266) 1 else 0)
+ 109:         }
+ 110:         val isDemo = controller.url.removeSuffix("/").equals(ControllerStore.DEMO_URL.removeSuffix("/"), ignoreCase = true)
+ 111:         if (isDemo) {
+ 112:             espSpinner.isEnabled = false
+ 113:         }
+ 114:         val container = androidx.appcompat.widget.LinearLayoutCompat(this).apply {
+ 115:             orientation = androidx.appcompat.widget.LinearLayoutCompat.VERTICAL
+ 116:             setPadding(32, 8, 32, 0)
+ 117:             addView(name)
+ 118:             addView(url)
+ 119:             addView(TextView(this@SettingsActivity).apply { text = getString(R.string.label_esp_type) })
+ 120:             addView(espSpinner)
+ 121:             if (isDemo) {
+ 122:                 addView(TextView(this@SettingsActivity).apply { text = getString(R.string.demo_esp_locked) })
+ 123:             }
+ 124:         }
+ 125:         AlertDialog.Builder(this)
+ 126:             .setTitle(getString(R.string.edit))
+ 127:             .setView(container)
+ 128:             .setPositiveButton(R.string.dialog_save) { d, _ ->
+ 129:                 val n = name.text.toString().trim()
+ 130:                 val u = url.text.toString().trim()
+ 131:                 if (n.isNotEmpty() && isValidUrl(u)) {
+ 132:                     controller.name = n
+ 133:                     controller.url = u
+ 134:                     if (!isDemo) {
+ 135:                         controller.espType = if (espSpinner.selectedItemPosition == 1) EspType.ESP8266 else EspType.ESP32
+ 136:                     } else {
+ 137:                         controller.espType = EspType.ESP32
+ 138:                     }
+ 139:                     store.updateController(controller)
+ 140:                     refresh()
+ 141:                 } else {
+ 142:                     android.widget.Toast.makeText(this, R.string.invalid_url, android.widget.Toast.LENGTH_SHORT).show()
+ 143:                 }
+ 144:                 d.dismiss()
+ 145:             }
+ 146:             .setNegativeButton(R.string.dialog_cancel, null)
+ 147:             .show()
+ 148:     }
+ 149: 
+ 150:     private fun isValidUrl(url: String): Boolean {
+ 151:         val u = url.trim()
+ 152:         return u.isNotEmpty() && !u.contains(" ")
+ 153:     }
+ 154: }
+ 155: 
+ 156: private fun SettingsActivity.enableEdgeSwipeToOpenDrawer() {
+ 157:     val edgeWidthPx = (24 * resources.displayMetrics.density).toInt()
+ 158:     val triggerDistancePx = (64 * resources.displayMetrics.density).toInt()
+ 159:     var tracking = false
+ 160:     var startX = 0f
+ 161: 
+ 162:     fun openDrawer() {
+ 163:         val intent = android.content.Intent(this, MainActivity::class.java)
+ 164:         intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+ 165:         intent.putExtra("open_drawer", true)
+ 166:         startActivity(intent)
+ 167:         finish()
+ 168:     }
+ 169: 
+ 170:     val root = (findViewById<ViewGroup>(android.R.id.content).getChildAt(0) ?: return)
+ 171:     root.setOnTouchListener { _, ev ->
+ 172:         when (ev.actionMasked) {
+ 173:             MotionEvent.ACTION_DOWN -> {
+ 174:                 tracking = ev.x <= edgeWidthPx
+ 175:                 startX = ev.x
+ 176:                 false
+ 177:             }
+ 178:             MotionEvent.ACTION_MOVE -> {
+ 179:                 if (tracking && (ev.x - startX) > triggerDistancePx) {
+ 180:                     openDrawer()
+ 181:                     tracking = false
+ 182:                     true
+ 183:                 } else false
+ 184:             }
+ 185:             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+ 186:                 tracking = false
+ 187:                 false
+ 188:             }
+ 189:             else -> false
+ 190:         }
+ 191:     }
+ 192: }
+ 193: 
+ 194: private class ControllerAdapter(
+ 195:     val onSetActive: (String) -> Unit,
+ 196:     val onEdit: (Controller) -> Unit,
+ 197:     val onDelete: (String) -> Unit,
+ 198: ) : RecyclerView.Adapter<ControllerVH>() {
+ 199:     private val items = mutableListOf<Controller>()
+ 200:     private var activeId: String? = null
+ 201: 
+ 202:     fun submit(list: List<Controller>, active: String?) {
+ 203:         items.clear()
+ 204:         items.addAll(list)
+ 205:         activeId = active
+ 206:         notifyDataSetChanged()
+ 207:     }
+ 208: 
+ 209:     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ControllerVH {
+ 210:         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_controller, parent, false)
+ 211:         return ControllerVH(v)
+ 212:     }
+ 213: 
+ 214:     override fun getItemCount(): Int = items.size
+ 215: 
+ 216:     override fun onBindViewHolder(holder: ControllerVH, position: Int) {
+ 217:         val item = items[position]
+ 218:         holder.name.text = buildString {
+ 219:             append(item.name)
+ 220:             if (item.id == activeId) append("  • aktiv")
+ 221:         }
+ 222:         holder.url.text = item.url
+ 223:         holder.btnSetActive.setOnClickListener { onSetActive(item.id) }
+ 224:         holder.btnEdit.setOnClickListener { onEdit(item) }
+ 225:         holder.btnDelete.setOnClickListener { onDelete(item.id) }
+ 226:     }
+ 227: }
+ 228: 
+ 229: private class ControllerVH(v: View) : RecyclerView.ViewHolder(v) {
+ 230:     val name: TextView = v.findViewById(R.id.name)
+ 231:     val url: TextView = v.findViewById(R.id.url)
+ 232:     val btnSetActive: View = v.findViewById(R.id.btnSetActive)
+ 233:     val btnEdit: View = v.findViewById(R.id.btnEdit)
+ 234:     val btnDelete: View = v.findViewById(R.id.btnDelete)
+ 235: }

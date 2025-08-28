@@ -23,10 +23,14 @@ class WebFragment : Fragment() {
     private lateinit var webView: WebView
     private lateinit var progress: View
     private lateinit var errorView: View
+    private var restoredFromState: Boolean = false
+    private var lastUrl: String? = null
     
 
     companion object {
         fun newInstance() = WebFragment()
+        private const val STATE_WEBVIEW = "web_state"
+        private const val STATE_LAST_URL = "last_url"
         private const val INJECT_CSS = """
             (function(){
               try {
@@ -54,12 +58,36 @@ class WebFragment : Fragment() {
             startActivity(android.content.Intent(requireContext(), SettingsActivity::class.java))
         }
         setupWebView()
+        // Evtl. zuletzt geladene URL wiederherstellen (robust gegen SPA, die die URL nicht ändert)
+        lastUrl = savedInstanceState?.getString(STATE_LAST_URL)
+
+        // Zuerst versuchen, den WebView-internen Verlauf zu restaurieren
+        val webState = savedInstanceState?.getBundle(STATE_WEBVIEW)
+        if (webState != null) {
+            try {
+                webView.restoreState(webState)
+                restoredFromState = true
+            } catch (_: Throwable) {
+                restoredFromState = false
+            }
+        }
+
+        // Falls der Verlauf nicht wiederhergestellt werden konnte, aber eine letzte URL bekannt ist, diese laden
+        if (!restoredFromState && lastUrl != null) {
+            webView.loadUrl(lastUrl!!)
+            restoredFromState = true
+        }
+
+        // Wenn weiterhin nichts geladen ist, Standard-URL laden
+        if (!restoredFromState && webView.url == null) {
+            load()
+        }
         return v
     }
 
     override fun onResume() {
         super.onResume()
-        load()
+        // Kein automatisches Neuladen, aktuelle Seite beibehalten
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -76,16 +104,24 @@ class WebFragment : Fragment() {
         webView.webChromeClient = object : WebChromeClient() {}
         webView.webViewClient = object : WebViewClient() {
             // Handle legacy Android (< API 23) errors, so we always show our custom error view
+            @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
             override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
                 showError()
             }
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 showLoading()
+                if (!url.isNullOrEmpty()) {
+                    lastUrl = url
+                }
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 hideLoading()
                 injectCss()
+                // Zuletzt geladene URL mitführen (hilft bei Orientierung/Rotation)
+                if (!url.isNullOrEmpty()) {
+                    lastUrl = url
+                }
             }
 
             override fun onReceivedError(
@@ -118,6 +154,19 @@ class WebFragment : Fragment() {
         } catch (_: Throwable) { }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        val state = Bundle()
+        try {
+            webView.saveState(state)
+            outState.putBundle(STATE_WEBVIEW, state)
+            // Zusätzlich die letzte URL sichern (robust gegen SPAs ohne URL-Wechsel)
+            lastUrl = webView.url ?: lastUrl
+            if (!lastUrl.isNullOrEmpty()) {
+                outState.putString(STATE_LAST_URL, lastUrl)
+            }
+        } catch (_: Throwable) { }
+    }
 
     private fun load() {
         val store = ControllerStore(requireContext())
