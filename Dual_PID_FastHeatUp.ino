@@ -53,7 +53,7 @@
 // #define SCALE_TYPE SCALE_I2C
 
  // Nachfolgende Zeile auskommentieren, falls die Steuerung ohne Display verwendet wird!
-#define ENABLE_DISPLAY
+// er#define ENABLE_DISPLAY
 
 /************************************************************************************
  * Vorwärtsdeklarationen benutzerdefinierter Strukturen
