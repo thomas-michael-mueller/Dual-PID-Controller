@@ -52,8 +52,8 @@
 #define SCALE_TYPE SCALE_ESPNOW
 // #define SCALE_TYPE SCALE_I2C
 
- // Nachfolgende Zeile auskommentieren, falls die Steuerung ohne Display verwendet wird!
-// er#define ENABLE_DISPLAY
+// Nachfolgende Zeile auskommentieren, falls die Steuerung ohne Display verwendet wird!
+#define ENABLE_DISPLAY
 
 /************************************************************************************
  * Vorwärtsdeklarationen benutzerdefinierter Strukturen
