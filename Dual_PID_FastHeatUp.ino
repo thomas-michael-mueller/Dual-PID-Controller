@@ -52,7 +52,7 @@
 #define SCALE_TYPE SCALE_ESPNOW
 // #define SCALE_TYPE SCALE_I2C
 
-// Nachfolgende Zeile auskommentieren, falls die Steuerung ohne Display verwendet wird!
+ // Nachfolgende Zeile auskommentieren, falls die Steuerung ohne Display verwendet wird!
 #define ENABLE_DISPLAY
 
 /************************************************************************************
@@ -7750,7 +7750,7 @@ static const char firmwareUpdateResultBodyStart[] PROGMEM = R"rawliteral(
 )rawliteral";
 
 static const char firmwareUpdateResultBodyEnd[] PROGMEM = R"rawliteral(
-  <p>Die Steuerung startet neu...</p>
+  <p>Neustart wird ausgef&uuml;hrt ...</p>
 </form>
 </body>
 </html>
