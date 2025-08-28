@@ -52,7 +52,7 @@
 #define SCALE_TYPE SCALE_ESPNOW
 // #define SCALE_TYPE SCALE_I2C
 
-// Nachfolgende Zeile auskommentieren, falls die Steuerung ohne Display verwendet wird!
+ // Nachfolgende Zeile auskommentieren, falls die Steuerung ohne Display verwendet wird!
 #define ENABLE_DISPLAY
 
 /************************************************************************************
@@ -213,7 +213,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, &Wire);
  * Firmware-Informationen
  ************************************************************************************/
 
-String version = "3.7.0";
+String version = "3.6.2";
 String versionHersteller = "Thomas M&uuml;ller";
 String versionHerstellerMail =
   "<a href='mailto:thomas@mueller.black' class='info-link'>thomas@mueller.black</a>";
@@ -6412,37 +6412,6 @@ static const char chartsHtml_BodyEnd[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-// Zusätzlicher Runtime-Patch: zeigt Fehlbox wenn Chart.js fehlt und
-// härtet Tooltip gegen undefined/NaN ab (verhindert toFixed()-Fehler).
-static const char chartsHtml_RuntimePatch[] PROGMEM = R"rawliteral(
-<script>
-(function() {
-  function showLibError() {
-    var c = document.querySelector('.chart-page-content');
-    if (!c) return;
-    var html = "<div class='chart-error-box'><h2>Chart kann nicht angezeigt werden</h2><p>Die Chart-Bibliothek (chart.umd.min.js) ist nicht geladen. Laden Sie die Datei in den Dateimanager als /chart.umd.min.js oder verbinden Sie das Gerät mit dem Internet.</p></div>";
-    c.insertAdjacentHTML('beforeend', html);
-  }
-  if (typeof Chart === 'undefined') { showLibError(); return; }
-  try {
-    if (typeof combinedChart !== 'undefined' && combinedChart.options && combinedChart.options.plugins && combinedChart.options.plugins.tooltip) {
-      combinedChart.options.plugins.tooltip.callbacks = combinedChart.options.plugins.tooltip.callbacks || {};
-      combinedChart.options.plugins.tooltip.callbacks.label = function(context) {
-        var label = (context && context.dataset && context.dataset.label) ? (context.dataset.label + ': ') : '';
-        var y = (context && context.parsed) ? context.parsed.y : undefined;
-        if (typeof y === 'number' && isFinite(y)) {
-          if (context && context.dataset && context.dataset.yAxisID === 'y1') return label + y.toFixed(2) + ' g/s';
-          return label + y.toFixed(1) + ' \u00B0C';
-        }
-        return label + '--';
-      };
-      if (typeof combinedChart.update === 'function') combinedChart.update('none');
-    }
-  } catch(e) { /* ignore */ }
-})();
-</script>
-)rawliteral";
-
 
 // --- handleCharts Funktion ---
 void handleCharts(AsyncWebServerRequest *request)  // URL: /Chart
@@ -6505,7 +6474,6 @@ void handleCharts(AsyncWebServerRequest *request)  // URL: /Chart
     response->print("<script>\n");
     response->print(FPSTR(chartsHtml_ChartJSCode));
     response->print("\n</script>\n");
-    response->print(FPSTR(chartsHtml_RuntimePatch));
     yield();
 
   } else {
