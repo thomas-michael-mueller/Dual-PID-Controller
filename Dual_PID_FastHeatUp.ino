@@ -6191,7 +6191,7 @@ const textColor = '#E0E0E0';
         { label: 'Dampf IST',  data: [], borderColor: dampfColor,   backgroundColor: 'rgba(247, 148, 29, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: dampfColor },
         { label: 'Wasser SOLL', data: [], borderColor: setpointWasserColor, borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 },
         { label: 'Dampf SOLL',  data: [], borderColor: setpointDampfColor,  borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 },
-        { label: 'Flow-Rate',   data: [], borderColor: flowColor,   backgroundColor: 'rgba(46, 204, 113, 0.08)', borderWidth: 2, fill: false, tension: 0.35, pointRadius: 0, yAxisID: 'y1', hidden: true }
+        { label: 'Flow-Rate',   data: [], borderColor: flowColor,   backgroundColor: 'rgba(46, 204, 113, 0.08)', borderWidth: 2, fill: false, tension: 0.35, pointRadius: 0, yAxisID: 'y1', hidden: false }
       ]
     },
     options: {
@@ -6252,7 +6252,7 @@ const textColor = '#E0E0E0';
           }
           datasets[4].hidden = false;
         } else {
-          datasets[4].hidden = true;
+          // keep Flow visible after shot
           // Reset Startpunkt, damit der nächste Bezug sauber startet
           lastWeight = null; lastTimeMs = null;
         }
