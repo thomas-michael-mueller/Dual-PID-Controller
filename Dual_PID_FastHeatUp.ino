@@ -53,7 +53,7 @@
 // #define SCALE_TYPE SCALE_I2C
 
  // Nachfolgende Zeile auskommentieren, falls die Steuerung ohne Display verwendet wird!
-#define ENABLE_DISPLAY
+// er#define ENABLE_DISPLAY
 
 /************************************************************************************
  * Vorwärtsdeklarationen benutzerdefinierter Strukturen
@@ -221,7 +221,7 @@ String versionHerstellerWeb =
   "<a href='https://raw-designs.de/' target='_blank' class='info-link'>https://raw-designs.de/</a> | "
   "<a href='https://mueller.black/' target='_blank' class='info-link'>https://mueller.black/</a>";
 String versionHerstellerGitHub =
-  "<a href='https://github.com/thomas-michael-mueller/dual-pid' target='_blank' class='info-link'>https://github.com/thomas-michael-mueller/dual-pid</a>";
+  "<a href='https://github.com/thomas-michael-mueller/Dual-PID-Controller' target='_blank' class='info-link'>https://github.com/thomas-michael-mueller/Dual-PID-Controller</a>";
 
 // Demo-Modus: Hier können bestimmte Funktionen (WLAN-Anpassungen etc.) eingeschränkt werden.
 // Entweder hier pauschal auf true setzen oder über IP-Adresse im Setup()-Teil auf true setzen lassen.
@@ -6029,7 +6029,7 @@ static const char chartsHtml_HeadStart[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <title>Temperatur-Chart</title>
+  <title>Chart</title>
   <meta charset="UTF-8">
   <meta name='theme-color' content='#111111'>
   <meta name='viewport' content='width=device-width, initial-scale=1.0'>
@@ -6094,6 +6094,10 @@ static const char chartsHtml_SpecificStyles[] PROGMEM = R"rawliteral(
       }
      #chart-fullscreen-btn:focus { outline: none; border-color: var(--accent-color, #d89904); box-shadow: 0 0 8px rgba(216, 153, 4, 0.3); }
 
+    /* Icon-Button Overrides */
+    #chart-fullscreen-btn { width: 38px; height: 38px; padding: 6px; min-width: 38px; display: inline-flex; align-items: center; justify-content: center; }
+    #chart-fullscreen-btn svg { width: 20px; height: 20px; display: block; }
+
     /* Restliche Styles bleiben unverändert */
     .chart-container { width: 95%; height: 65vh; min-height: 350px; margin: 15px auto; background: rgba(0, 0, 0, 0.2); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); border-radius: 15px; position: relative; border: 1px solid rgba(255, 255, 255, 0.1); padding: 20px; box-sizing: border-box; transition: all 0.3s ease-in-out; }
     .chart-container canvas { width: 100% !important; height: 100% !important; }
@@ -6115,14 +6119,16 @@ static const char chartsHtml_SpecificStyles[] PROGMEM = R"rawliteral(
     @media (max-width: 600px) {
        h1.chart-title {}
        .chart-container { width: 98%; padding: 10px; height: 65vh; }
-       .chart-controls-container { flex-direction: column; gap: 15px; align-items: center; }
-       .chart-controls-container > div { width: 100%; max-width: 250px; text-align: center; }
-       .chart-controls-container select { width: 100%; }
-       #chart-fullscreen-btn { margin-top: 10px; margin-left: 0; width: 100%; max-width: 250px; }
+       /* Zwei Selects nebeneinander + Icon rechts in einer Zeile */
+       .chart-controls-container { flex-direction: row; flex-wrap: nowrap; gap: 10px; align-items: flex-end; justify-content: flex-start; }
+       .chart-controls-container > div { flex: 0 1 calc((100% - 38px - 20px) / 2); min-width: 0; max-width: none; text-align: left; }
+       .chart-controls-container label { margin-bottom: 4px; }
+       .chart-controls-container select { width: 100%; min-width: 0; }
+       #chart-fullscreen-btn { margin-top: 0; margin-left: 0; width: 38px; max-width: 38px; flex: 0 0 38px; }
        .sensor-error-message { width: 90%; font-size: 0.85em; }
        .chart-error-box { width: 90%; padding: 15px;}
        body.chart-fullscreen-active .chart-controls-container { top: 5px; right: 5px; }
-       body.chart-fullscreen-active #chart-fullscreen-btn { padding: 6px 10px; font-size: 0.8em; }
+       body.chart-fullscreen-active #chart-fullscreen-btn { padding: 6px; }
     }
   </style>
 )rawliteral";
@@ -6143,7 +6149,11 @@ static const char chartsHtml_SelectorsUI[] PROGMEM = R"rawliteral(
         <option value="30">30</option> <option value="50">50</option> <option value="100" selected>100</option> <option value="150">150</option> <option value="200">200</option> <option value="300">300</option> <option value="500">500</option>
       </select>
     </div>
-    <button id="chart-fullscreen-btn">Vollbild</button>
+    <button id="chart-fullscreen-btn" aria-label="Vollbild" title="Vollbild" type="button">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+        <path d="M7 3H3v4h2V5h2V3zm14 0h-4v2h2v2h2V3zM5 17H3v4h4v-2H5v-2zm16 0h-2v2h-2v2h4v-4z"/>
+      </svg>
+    </button>
   </div>
 )rawliteral";
 
@@ -6171,7 +6181,23 @@ const datasets = combinedChart.data.datasets; labels.push(timeLabel); datasets[0
   document.getElementById('datapointLimit').addEventListener('change', function(event) { const newLimit = parseInt(event.target.value, 10); if (!isNaN(newLimit) && newLimit > 0) { maxDataPoints = newLimit; console.log(`Maximale Datenpunkte geändert auf: ${maxDataPoints}`); } });
  const fullscreenBtn = document.getElementById('chart-fullscreen-btn');
 const bodyElement = document.body;
- fullscreenBtn.addEventListener('click', () => { bodyElement.classList.toggle('chart-fullscreen-active'); if (bodyElement.classList.contains('chart-fullscreen-active')) { fullscreenBtn.textContent = 'Verlassen'; } else { fullscreenBtn.textContent = 'Vollbild'; } setTimeout(() => { if (typeof combinedChart !== 'undefined' && combinedChart) { combinedChart.resize(); } }, 50); });
+ const enterFsIcon = `
+   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+     <path d="M7 3H3v4h2V5h2V3zm14 0h-4v2h2v2h2V3zM5 17H3v4h4v-2H5v-2zm16 0h-2v2h-2v2h4v-4z"/>
+   </svg>`;
+ const exitFsIcon = `
+   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+     <path d="M3 7h4V5H5V3H3v4zm18-4h-4v2h2v2h2V3zM3 21h4v-2H5v-2H3v4zm18-4h-2v2h-2v2h4v-4z"/>
+   </svg>`;
+ fullscreenBtn.innerHTML = enterFsIcon;
+ fullscreenBtn.addEventListener('click', () => {
+   bodyElement.classList.toggle('chart-fullscreen-active');
+   const isFs = bodyElement.classList.contains('chart-fullscreen-active');
+   fullscreenBtn.innerHTML = isFs ? exitFsIcon : enterFsIcon;
+   fullscreenBtn.setAttribute('aria-label', isFs ? 'Vollbild verlassen' : 'Vollbild');
+   fullscreenBtn.setAttribute('title', isFs ? 'Vollbild verlassen' : 'Vollbild');
+   setTimeout(() => { if (typeof combinedChart !== 'undefined' && combinedChart) { combinedChart.resize(); } }, 50);
+ });
   startFetching();
 )rawliteral";
 
@@ -6225,7 +6251,7 @@ void handleCharts(AsyncWebServerRequest *request)  // URL: /Chart
   response->print(FPSTR(commonNav));
   response->print("<main class=\"chart-page-content\">\n");
 
-  response->print("<h1 class=\"chart-title\">Temperatur-Chart</h1>\n");
+  response->print("<h1 class=\"chart-title\">Chart</h1>\n");
 
   if (canLoadChartJs) {
     response->print(FPSTR(chartsHtml_SelectorsUI)); // HTML mit Label über Select

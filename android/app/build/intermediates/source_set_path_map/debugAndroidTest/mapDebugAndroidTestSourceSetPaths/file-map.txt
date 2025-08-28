@@ -1,0 +1,5 @@
+black.mueller.pid.test.app-core-1.6.1-0 C:\Users\Thomas\.gradle\caches\transforms-4\6da8ed0715aaa5030bd152214bdb1ee6\transformed\core-1.6.1\res
+black.mueller.pid.test.app-androidTest-1 D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\build\generated\res\resValues\androidTest\debug
+black.mueller.pid.test.app-mergeDebugAndroidTestResources-2 D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+black.mueller.pid.test.app-mergeDebugAndroidTestResources-3 D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+black.mueller.pid.test.app-debugAndroidTest-4 D:\Thomas\Dokumente\GitHub\Dual-PID-Controller_Test\android\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

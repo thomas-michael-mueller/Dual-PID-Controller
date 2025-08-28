@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent">#d89904</color>
+    <color name="background_dark">#121212</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_surface_dark">#E0E0E0</color>
+    <color name="primary">#d89904</color>
+    <color name="primary_dark">#b67f03</color>
+    <color name="surface_dark">#1E1E1E</color>
+    <string name="action_add_controller">Controller hinzufügen</string>
+    <string name="action_change_controller">Controller wechseln</string>
+    <string name="action_retry">Erneut versuchen</string>
+    <string name="app_name">Dual-PID</string>
+    <string name="connect_demo">Mit Demo-Controller verbinden</string>
+    <string name="controller_current">Aktueller Controller</string>
+    <string name="controllers">Controller</string>
+    <string name="delete">Löschen</string>
+    <string name="demo_esp_locked">Demo-Controller verwendet immer ESP32 und kann hier nicht geändert werden.</string>
+    <string name="dialog_cancel">Abbrechen</string>
+    <string name="dialog_save">Speichern</string>
+    <string name="drawer_app_info">App-Info</string>
+    <string name="drawer_dashboard">Web-Interface</string>
+    <string name="drawer_settings">Einstellungen</string>
+    <string name="edit">Bearbeiten</string>
+    <string name="empty_state_message">Es konnte keine Verbindung zum Dual-PID Controller hergestellt werden. Prüfe WLAN/URL/Flugmodus.</string>
+    <string name="empty_state_title">Keine Verbindung</string>
+    <string name="esp32">ESP32</string>
+    <string name="esp8266">ESP8266</string>
+    <string name="hint_controller_name">Name</string>
+    <string name="hint_controller_url">URL (z.B. http://192.168.4.1)</string>
+    <string name="invalid_url">Ungültige URL</string>
+    <string name="label_esp_type">ESP-Typ</string>
+    <string name="menu_close_drawer">Menü schließen</string>
+    <string name="menu_open_drawer">Menü öffnen</string>
+    <string name="no_controllers">Noch keine Controller angelegt.</string>
+    <string name="set_active">Aktiv setzen</string>
+    <string name="title_app_info">App-Info</string>
+    <string name="title_onboarding">Ersteinrichtung</string>
+    <string name="title_settings">Einstellungen</string>
+    <string name="version_label">Version</string>
+    <string name="web_loading">Laden…</string>
+    <style name="Theme.DualPID" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryContainer">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorSecondaryContainer">@color/primary_dark</item>
+        <item name="colorSurface">@color/surface_dark</item>
+        <item name="colorOnSurface">@color/on_surface_dark</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:statusBarColor">@color/surface_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/surface_dark</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>
