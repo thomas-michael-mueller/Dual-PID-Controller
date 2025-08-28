@@ -10,6 +10,3 @@ android/**/build/
 .idea/
 android/.gradle/
 android/app/.gradle/
-
-# Codex-Start-Datei
-Codex Start.bat
