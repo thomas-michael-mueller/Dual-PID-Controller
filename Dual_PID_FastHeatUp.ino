@@ -213,7 +213,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, &Wire);
  * Firmware-Informationen
  ************************************************************************************/
 
-String version = "3.6.2";
+String version = "3.7.0";
 String versionHersteller = "Thomas M&uuml;ller";
 String versionHerstellerMail =
   "<a href='mailto:thomas@mueller.black' class='info-link'>thomas@mueller.black</a>";
@@ -5994,6 +5994,47 @@ void handleUpdateIntervalSettings(AsyncWebServerRequest *request) {
 void handleChartData(AsyncWebServerRequest *request) {
   AsyncResponseStream *response = request->beginResponseStream("application/json");
   char buffer[20];
+  
+  // Dynamische Flow-Rate (g/s) berechnen, falls ESP32 + Waage + Bezug aktiv
+  // Falls kein Bezug/Waage: 0.0 zurückgeben und internen Zustand zurücksetzen
+  float flowGs = 0.0f;
+#ifdef ESP32
+  static float lastWeightForFlow = 0.0f;
+  static unsigned long lastFlowCalcTimeMs = 0;
+  static bool lastShotState = false;
+  static float smoothedFlow = 0.0f; // einfacher EMA-Filter
+
+  const bool mayCalcFlow = (shotActive && scaleConnected);
+  const unsigned long nowMs = millis();
+  if (mayCalcFlow) {
+    if (lastFlowCalcTimeMs == 0 || !lastShotState) {
+      // Initialisieren beim Start des Bezugs
+      lastFlowCalcTimeMs = nowMs;
+      lastWeightForFlow = currentWeightReading;
+      smoothedFlow = 0.0f;
+      flowGs = 0.0f;
+    } else {
+      unsigned long dt = nowMs - lastFlowCalcTimeMs;
+      if (dt > 0) {
+        float dWeight = currentWeightReading - lastWeightForFlow;
+        float instFlow = dWeight / (float(dt) / 1000.0f);
+        if (instFlow < 0) instFlow = 0.0f; // Unterdrücke negatives Rauschen
+        // Exponential Moving Average zur Glättung
+        const float alpha = 0.3f;
+        smoothedFlow = alpha * instFlow + (1.0f - alpha) * smoothedFlow;
+        flowGs = smoothedFlow;
+        lastFlowCalcTimeMs = nowMs;
+        lastWeightForFlow = currentWeightReading;
+      }
+    }
+  } else {
+    // Reset, damit beim nächsten Shot sauber neu gestartet wird
+    lastFlowCalcTimeMs = 0;
+    smoothedFlow = 0.0f;
+    flowGs = 0.0f;
+  }
+  lastShotState = shotActive;
+#endif
 
   response->print(F("{\"wasser\":"));
   snprintf(buffer, sizeof(buffer), "%.1f", InputWasser);
@@ -6009,6 +6050,11 @@ void handleChartData(AsyncWebServerRequest *request) {
 
   response->print(F(",\"setpointdampf\":"));
   snprintf(buffer, sizeof(buffer), "%.1f", SetpointDampf);
+  response->print(buffer);
+
+  // Flow-Rate immer mitsenden (ESP32: berechnet, sonst 0.0) -> Null-Linie bei nicht aktivem Bezug/Waage
+  response->print(F(",\"flow\":"));
+  snprintf(buffer, sizeof(buffer), "%.2f", flowGs);
   response->print(buffer);
 
   response->print(F("}"));
@@ -6166,16 +6212,71 @@ const wasserColor = '#00AEEF';
 const dampfColor = '#F7941D';
 const setpointWasserColor = 'rgba(0, 174, 239, 0.7)';
 const setpointDampfColor = 'rgba(247, 148, 29, 0.7)';
+const flowColor = '#46C37B';
 const gridColor = 'rgba(255, 255, 255, 0.1)';
 const textColor = '#E0E0E0';
   let maxDataPoints = parseInt(document.getElementById('datapointLimit').value, 10) || 100;
-  const combinedChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [ { label: 'Wasser IST', data: [], borderColor: wasserColor, backgroundColor: 'rgba(0, 174, 239, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: wasserColor }, { label: 'Dampf IST', data: [], borderColor: dampfColor, backgroundColor: 'rgba(247, 148, 29, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: dampfColor }, { label: 'Wasser SOLL', data: [], borderColor: setpointWasserColor, borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 }, { label: 'Dampf SOLL', data: [], borderColor: setpointDampfColor, borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 } ] }, options: { responsive: true, maintainAspectRatio: false, animation: false, interaction: { intersect: false, mode: 'index' }, scales: { x: { type: 'category', title: { display: true, text: 'Uhrzeit', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: gridColor, drawBorder: false } }, y: { suggestedMin: 0, suggestedMax: 180, title: { display: true, text: 'Temperatur (°C)', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, stepSize: 20, callback: function(value, index, values) { return value + ' °C'; } }, grid: { color: gridColor, drawBorder: false } } }, plugins: { legend: { position: 'bottom', align: 'center', labels: { color: textColor, font: { size: 12 }, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 15, padding: 15 } }, tooltip: { enabled: true, mode: 'index', intersect: false, backgroundColor: 'rgba(0, 0, 0, 0.85)', titleColor: '#ffffff', titleFont: { size: 13, weight: 'bold' }, bodyColor: '#dddddd', bodyFont: { size: 12 }, bodySpacing: 4, borderColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4, callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) { label += ': '; } if (context.parsed.y !== null) { label += context.parsed.y.toFixed(1) + ' °C'; } return label; } } } } } });
+  const combinedChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label: 'Wasser IST', data: [], borderColor: wasserColor, backgroundColor: 'rgba(0, 174, 239, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: wasserColor },
+        { label: 'Dampf IST', data: [], borderColor: dampfColor, backgroundColor: 'rgba(247, 148, 29, 0.1)', borderWidth: 2, fill: 'start', tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 10, pointHoverBackgroundColor: dampfColor },
+        { label: 'Wasser SOLL', data: [], borderColor: setpointWasserColor, borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 },
+        { label: 'Dampf SOLL', data: [], borderColor: setpointDampfColor, borderWidth: 1.5, borderDash: [6, 3], fill: false, tension: 0.1, pointRadius: 0, pointHoverRadius: 0 },
+        { label: 'Flow (g/s)', data: [], borderColor: flowColor, backgroundColor: 'rgba(70, 195, 123, 0.15)', borderWidth: 2, fill: false, tension: 0.25, pointRadius: 0, yAxisID: 'y2' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { intersect: false, mode: 'index' },
+      scales: {
+        x: { type: 'category', title: { display: true, text: 'Uhrzeit', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: gridColor, drawBorder: false } },
+        y: { suggestedMin: 0, suggestedMax: 180, title: { display: true, text: 'Temperatur (°C)', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 }, stepSize: 20, callback: function(value) { return value + ' °C'; } }, grid: { color: gridColor, drawBorder: false } },
+        y2: { position: 'right', suggestedMin: 0, suggestedMax: 6, title: { display: true, text: 'Flow (g/s)', color: textColor, font: { size: 13, weight: '300' } }, ticks: { color: textColor, font: { size: 11 } }, grid: { drawOnChartArea: false } }
+      },
+      plugins: {
+        legend: { position: 'bottom', align: 'center', labels: { color: textColor, font: { size: 12 }, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 15, padding: 15 } },
+        tooltip: {
+          enabled: true, mode: 'index', intersect: false,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)', titleColor: '#ffffff', titleFont: { size: 13, weight: 'bold' },
+          bodyColor: '#dddddd', bodyFont: { size: 12 }, bodySpacing: 4,
+          borderColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4,
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) { label += ': '; }
+              if (context.parsed.y !== null) {
+                const isFlow = (context.dataset.yAxisID === 'y2') || /Flow/.test(context.dataset.label||'');
+                label += context.parsed.y.toFixed(2) + (isFlow ? ' g/s' : ' °C');
+              }
+              return label;
+            }
+          }
+        }
+      }
+    }
+  });
   let updateInterval = parseInt(document.getElementById('updateRate').value, 10) || 15000; let intervalId = null;
   function fetchData() { fetch('/Chart-Daten').then(response => { if (!response.ok) { console.error('Netzwerkantwort war nicht ok:', response.statusText); throw new Error('Network response was not ok'); } return response.json(); }).then(data => { if (data.setpointwasser !== undefined) currentSetpointWasser = data.setpointwasser; if (data.setpointdampf !== undefined) currentSetpointDampf = data.setpointdampf;
 const now = new Date();
 const timeLabel = now.toLocaleTimeString('de-DE');
 const labels = combinedChart.data.labels;
-const datasets = combinedChart.data.datasets; labels.push(timeLabel); datasets[0].data.push(data.wasser); datasets[1].data.push(data.dampf); datasets[2].data.push(currentSetpointWasser); datasets[3].data.push(currentSetpointDampf); while (labels.length > maxDataPoints) { labels.shift(); datasets.forEach(dataset => { dataset.data.shift(); }); } combinedChart.update('none'); }).catch(err => { console.error("Fehler beim Abrufen der Daten:", err); }); }
+const datasets = combinedChart.data.datasets;
+labels.push(timeLabel);
+datasets[0].data.push(data.wasser);
+datasets[1].data.push(data.dampf);
+datasets[2].data.push(currentSetpointWasser);
+datasets[3].data.push(currentSetpointDampf);
+datasets[4].data.push((typeof data.flow === 'number') ? data.flow : 0.0);
+while (labels.length > maxDataPoints) {
+  labels.shift();
+  datasets.forEach(dataset => { dataset.data.shift(); });
+}
+combinedChart.update('none'); }).catch(err => { console.error("Fehler beim Abrufen der Daten:", err); }); }
   function startFetching() { if (intervalId) { clearInterval(intervalId); intervalId = null; } fetchData(); intervalId = setInterval(fetchData, updateInterval); console.log(`Chart-Aktualisierung gestartet: Intervall ${updateInterval / 1000} Sekunden.`); }
   document.getElementById('updateRate').addEventListener('change', function(event) { const newInterval = parseInt(event.target.value, 10); if (!isNaN(newInterval) && newInterval > 0) { updateInterval = newInterval; startFetching(); } });
   document.getElementById('datapointLimit').addEventListener('change', function(event) { const newLimit = parseInt(event.target.value, 10); if (!isNaN(newLimit) && newLimit > 0) { maxDataPoints = newLimit; console.log(`Maximale Datenpunkte geändert auf: ${maxDataPoints}`); } });
