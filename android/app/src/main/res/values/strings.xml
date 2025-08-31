@@ -31,4 +31,16 @@
     <string name="esp8266">ESP8266</string>
     <string name="connect_demo">Mit Demo-Controller verbinden</string>
     <string name="demo_esp_locked">Demo-Controller verwendet immer ESP32 und kann hier nicht geändert werden.</string>
+    <string name="action_open_wifi_settings">WLAN-Einstellungen öffnen</string>
+    <string name="error_network_title">Keine Netzwerkverbindung</string>
+    <string name="error_network_message">Bitte prüfe WLAN oder mobile Daten und versuche es erneut.</string>
+    <string name="error_ssl_title">Zertifikatsfehler</string>
+    <string name="error_ssl_message">Die HTTPS-Verbindung ist nicht vertrauenswürdig. Prüfe Datum/Uhrzeit und Zertifikat des Controllers.</string>
+    <string name="error_http_title">Serverfehler</string>
+    <string name="error_http_message">Der Controller hat einen Fehler gemeldet. Versuche es erneut oder prüfe den Controller.</string>
+    <string name="error_generic_title">Ladefehler</string>
+    <string name="error_generic_message">Die Seite konnte nicht geladen werden. Bitte versuche es erneut.</string>
+    <string name="error_icon_desc">Fehlermeldung</string>
+    <string name="error_timeout_title">Zeitüberschreitung</string>
+    <string name="error_timeout_message">Die Verbindung hat zu lange gedauert. Bitte versuche es erneut.</string>
 </resources>

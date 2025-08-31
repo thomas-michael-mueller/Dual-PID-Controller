@@ -84,9 +84,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (url != null) {
             val frag = supportFragmentManager.findFragmentById(R.id.content_frame) as? WebFragment
             if (frag != null) {
-                // load the selected URL
-                val wv = frag.view?.findViewById<android.webkit.WebView>(R.id.webView)
-                wv?.loadUrl(url)
+                // load with visible loading indicator
+                frag.navigateTo(url)
             } else {
                 supportFragmentManager.commit { replace(R.id.content_frame, WebFragment.newInstance()) }
                 // After fragment is created, first page will load and links will refresh
