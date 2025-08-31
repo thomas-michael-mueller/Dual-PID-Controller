@@ -3,6 +3,9 @@ android/keystore/*.jks
 android/keystore/keystore.properties
 android/keystore/*.p12
 
+# Android tmp-Ordner
+android/tmp/
+
 # Gradle build outputs
 android/**/build/
 
