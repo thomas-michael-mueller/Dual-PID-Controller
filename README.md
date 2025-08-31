@@ -84,7 +84,7 @@ Profile und Wartungsfunktionen eingestellt werden.
 ## Links
 - Projekt-Website: [https://pid.mueller.black](https://pid.mueller.black)
 - Live-Demo: [https://pid-demo.mueller.black](https://pid-demo.mueller.black)
-- Firmware-Download: [GitHub Releases](https://github.com/thomas-michael-mueller/dual-pid/releases)
+- Firmware-Download: [GitHub Releases](https://github.com/thomas-michael-mueller/Dual-PID-Controller)
 - ESP-NOW-Waage: [ESP-NOW-Waage](https://github.com/thomas-michael-mueller/dual-pid-scale)
 
 ## Beiträge
