@@ -5369,6 +5369,7 @@ static const char firmwareExportSection[] PROGMEM = R"rawliteral(
   <form method='GET' action='/exportSettings' enctype='multipart/form-data'>
     <h3>Einstellungen exportieren</h3>
     Sicherung aller aktuellen Einstellungen in einer Datei.<br>
+    Profile und Statistiken / Verl&auml;ufe m&uuml;ssen jedoch separat über den Dateimanager gesichert werden!<br>
     <button type='submit' >Exportieren</button>
   </form>
 )rawliteral";
