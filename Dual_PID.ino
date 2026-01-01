@@ -213,7 +213,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, &Wire);
  * Firmware-Informationen
  ************************************************************************************/
 
-String version = "3.7.0";
+String version = "3.7.1";
 String versionHersteller = "Thomas M&uuml;ller";
 String versionHerstellerMail =
   "<a href='mailto:thomas@mueller.black' class='info-link'>thomas@mueller.black</a>";
@@ -501,6 +501,7 @@ unsigned long defaultWindowSizeWasser = 2000;
 unsigned long defaultWindowSizeDampf = 2000;
 const bool defaultSteamDelayOverrideBySwitchEnabled = false; 
 bool steamDelayOverrideBySwitchEnabled = false;
+const bool defaultEcoInfoOnDisplay = false;
 
 // MagicValue zum Erkennen bereits gespeicherter EEPROM-Daten
 const char storageMagicValue[5] = "MGVE";
@@ -585,7 +586,8 @@ const int EEPROM_ADDR_BREWBYWEIGHT_OFFSET  = 647;         // WAR 643 -> float (4
 const int EEPROM_ADDR_PIEZO_ENABLED = 651;                // WAR 647 -> 1 Byte (bool) -> Ende 651
 // --- Dampfverzögerung über ECO-Einstellungen temporär überspringen
 const int EEPROM_ADDR_STEAM_DELAY_OVERRIDE_SWITCH = 652;  // 1 Byte (bool) -> Ende 652
-// Nächste freie Adresse: 653 (Innerhalb EEPROM_SIZE=1024)
+const int EEPROM_ADDR_ECO_INFO_ON_DISPLAY = 653;          // 1 Byte (bool) -> Ende 653
+// Nächste freie Adresse: 654 (Innerhalb EEPROM_SIZE=1024)
 
 /************************************************************************************
  * Eco-Mode Variablen
@@ -597,6 +599,7 @@ bool ecoModeAktiv = 0;           // Flag, ob Eco läuft
 int ecoModeTempWasser = 50;      // Zieltemp Wasser im Eco
 int ecoModeTempDampf = 50;       // Zieltemp Dampf im Eco
 bool dynamicEcoActive = false;
+bool ecoInfoOnDisplay = false;
 unsigned long ecoModeActivatedTime = 0;
 
 /************************************************************************************
@@ -1957,6 +1960,8 @@ void resetToDefaults() {
 
   // Dampfverzögerungs-Override auf Default im EEPROM schreiben
   EEPROM.put(EEPROM_ADDR_STEAM_DELAY_OVERRIDE_SWITCH, defaultSteamDelayOverrideBySwitchEnabled);
+  // Eco-Info Anzeige auf Default im EEPROM schreiben
+  EEPROM.put(EEPROM_ADDR_ECO_INFO_ON_DISPLAY, defaultEcoInfoOnDisplay);
  
   // Magic Value für allgemeine Einstellungen setzen (wichtig!)
   EEPROM.put(EEPROM_ADDR_MAGICVALUE, storageMagicValue);
@@ -1993,6 +1998,8 @@ void resetToDefaults() {
   
   // Globale Variable für Dampfverzögerungs-Override auf Default setzen
   steamDelayOverrideBySwitchEnabled = defaultSteamDelayOverrideBySwitchEnabled;
+  // Globale Variable für Eco-Info Anzeige auf Default setzen
+  ecoInfoOnDisplay = defaultEcoInfoOnDisplay;
   
   // PID Limits neu setzen (falls Fenstergröße geändert wurde)
   pidWasser.SetOutputLimits(0, windowSizeWasser);
@@ -2310,6 +2317,8 @@ void setup() {
 
     // Status für Dampfverzögerungs-Override per Schalter laden
     EEPROM.get(EEPROM_ADDR_STEAM_DELAY_OVERRIDE_SWITCH, steamDelayOverrideBySwitchEnabled);
+    // Eco-Info Anzeige auf dem Display laden
+    EEPROM.get(EEPROM_ADDR_ECO_INFO_ON_DISPLAY, ecoInfoOnDisplay);
     
     // Sicherstellen, dass Strings nullterminiert sind
     infoHersteller[sizeof(infoHersteller) - 1] = '\0';
@@ -3435,40 +3444,95 @@ if (scaleModeActive) {
     }
     else {
       // Standardanzeige: Temperaturen / Fehler / Sicherheitsabschaltung (Fallback, wenn nichts anderes zu tun ist)
-      display.println(F("Temperaturen:"));
-      display.println("");
-      display.println(F("Wasser: "));
-      if (wasserSafetyShutdown) { display.print(F("Sicherheitsabsch.")); }
-      else if (wasserSensorError) { display.print(F("Sensorfehler!")); }
-      else {
-        display.print((int)InputWasser);
-        display.print(F(" / "));
-        display.print((int)SetpointWasser);
-        display.print(F(" "));
-        display.print((char)247);
-        display.print(F("C"));
-        if (ecoModeAktiv && dynamicEcoActive) display.print(F(" (ECO+)"));
-        else if (ecoModeAktiv && !dynamicEcoActive) display.print(F(" (ECO)"));
-      }
-      display.println("");
-      display.println("");
-      display.println(F("Dampf:  "));
-      if (dampfSafetyShutdown) { display.print(F("Sicherheitsabsch.")); }
-      else if (dampfSensorError) { display.print(F("Sensorfehler!")); }
-      else {
-        bool steamDelayActiveSystem = (dampfVerzoegerung > 0 && (millis() - startupTime < (unsigned long)dampfVerzoegerung * 60000UL));
-        bool shouldShowDelayMessage = steamDelayActiveSystem && !steamDelayOverridden;
-        if (!shouldShowDelayMessage) {
-          display.print((int)InputDampf);
+      if (ecoInfoOnDisplay) {
+        display.println(F("Wasser:"));
+        if (wasserSafetyShutdown) { display.print(F("Sicherheitsabsch.")); }
+        else if (wasserSensorError) { display.print(F("Sensorfehler!")); }
+        else {
+          display.print((int)InputWasser);
           display.print(F(" / "));
-          display.print((int)SetpointDampf);
+          display.print((int)SetpointWasser);
           display.print(F(" "));
           display.print((char)247);
           display.print(F("C"));
           if (ecoModeAktiv && dynamicEcoActive) display.print(F(" (ECO+)"));
           else if (ecoModeAktiv && !dynamicEcoActive) display.print(F(" (ECO)"));
-        } else {
-          display.print(F("Startverz\x94gerung"));
+        }
+        display.println("");
+        display.println("");
+        display.println(F("Dampf:"));
+        if (dampfSafetyShutdown) { display.print(F("Sicherheitsabsch.")); }
+        else if (dampfSensorError) { display.print(F("Sensorfehler!")); }
+        else {
+          bool steamDelayActiveSystem = (dampfVerzoegerung > 0 && (millis() - startupTime < (unsigned long)dampfVerzoegerung * 60000UL));
+          bool shouldShowDelayMessage = steamDelayActiveSystem && !steamDelayOverridden;
+          if (!shouldShowDelayMessage) {
+            display.print((int)InputDampf);
+            display.print(F(" / "));
+            display.print((int)SetpointDampf);
+            display.print(F(" "));
+            display.print((char)247);
+            display.print(F("C"));
+            if (ecoModeAktiv && dynamicEcoActive) display.print(F(" (ECO+)"));
+            else if (ecoModeAktiv && !dynamicEcoActive) display.print(F(" (ECO)"));
+          } else {
+            display.print(F("Startverz\x94gerung"));
+          }
+        }
+        if (ecoModeAktiv) {
+          display.println("");
+          display.println("");
+          display.print(F("Eco-Modus aktiv"));
+        } else if (ecoModeMinutes > 0) {
+          display.println("");
+          display.println("");
+          unsigned long elapsedMs = millis() - lastShotTime;
+          unsigned long ecoMs = (unsigned long)ecoModeMinutes * 60UL * 1000UL;
+          long remainingMs = (long)ecoMs - (long)elapsedMs;
+          int remainingMin = 0;
+          if (remainingMs > 0) {
+            remainingMin = (int)((remainingMs + 60000UL - 1) / 60000UL);
+          }
+          display.print(F("Eco-Modus in "));
+          display.print(remainingMin);
+          display.print(F("min"));
+        }
+      } else {
+        display.println(F("Temperaturen:"));
+        display.println("");
+        display.println(F("Wasser: "));
+        if (wasserSafetyShutdown) { display.print(F("Sicherheitsabsch.")); }
+        else if (wasserSensorError) { display.print(F("Sensorfehler!")); }
+        else {
+          display.print((int)InputWasser);
+          display.print(F(" / "));
+          display.print((int)SetpointWasser);
+          display.print(F(" "));
+          display.print((char)247);
+          display.print(F("C"));
+          if (ecoModeAktiv && dynamicEcoActive) display.print(F(" (ECO+)"));
+          else if (ecoModeAktiv && !dynamicEcoActive) display.print(F(" (ECO)"));
+        }
+        display.println("");
+        display.println("");
+        display.println(F("Dampf:  "));
+        if (dampfSafetyShutdown) { display.print(F("Sicherheitsabsch.")); }
+        else if (dampfSensorError) { display.print(F("Sensorfehler!")); }
+        else {
+          bool steamDelayActiveSystem = (dampfVerzoegerung > 0 && (millis() - startupTime < (unsigned long)dampfVerzoegerung * 60000UL));
+          bool shouldShowDelayMessage = steamDelayActiveSystem && !steamDelayOverridden;
+          if (!shouldShowDelayMessage) {
+            display.print((int)InputDampf);
+            display.print(F(" / "));
+            display.print((int)SetpointDampf);
+            display.print(F(" "));
+            display.print((char)247);
+            display.print(F("C"));
+            if (ecoModeAktiv && dynamicEcoActive) display.print(F(" (ECO+)"));
+            else if (ecoModeAktiv && !dynamicEcoActive) display.print(F(" (ECO)"));
+          } else {
+            display.print(F("Startverz\x94gerung"));
+          }
         }
       }
     }
@@ -4686,6 +4750,20 @@ static const char ecoChunk_SteamOverrideToggle_End[] PROGMEM = R"rawliteral(>
     <small class="toggle-description">Wenn aktiviert, startet das Heizen des Dampfkreislaufs sofort, sobald der Bezugsschalter bet&auml;tigt wird, und ignoriert die eingestellte Verz&ouml;gerung.</small>
 )rawliteral";
 
+static const char ecoChunk_DisplayInfoToggle_Start[] PROGMEM = R"rawliteral(
+    <br><h3>Display</h3>
+    <div class="toggle-switch-container">
+        <span class="toggle-switch-label-text">Eco-Info auf dem Display anzeigen:</span>
+        <label class="toggle-switch">
+            <input type="checkbox" id="ecoInfoDisplay" name="ecoInfoDisplay" value="1")rawliteral"; // Endet VOR checked
+
+static const char ecoChunk_DisplayInfoToggle_End[] PROGMEM = R"rawliteral(>
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+    <small class="toggle-description">Zeigt im Idle-Display die Restzeit bis zur Eco-Aktivierung an.</small>
+)rawliteral";
+
 static const char ecoChunk_FinalWarningAndSubmit[] PROGMEM = R"rawliteral(
     <br><br><b style='color: #FFCC00;'>ACHTUNG:</b><br>
     Um Konflikte zu vermeiden, sollte der Wert der Verz&ouml;gerung geringer sein, als der des Eco-Modus, falls dieser aktiviert ist!
@@ -4751,6 +4829,14 @@ void handleEco(AsyncWebServerRequest *request)  // URL: /ECO
     response->print(F(" checked")); // 'checked' Attribut einfügen, wenn die Option aktiv ist
   }
   response->print(FPSTR(ecoChunk_SteamOverrideToggle_End)); // Rest des Toggle-HTMLs mit Beschreibung
+  yield();
+
+  // Toggle-Switch für Eco-Info im Display
+  response->print(FPSTR(ecoChunk_DisplayInfoToggle_Start)); // HTML bis vor 'checked'
+  if (ecoInfoOnDisplay) {
+    response->print(F(" checked"));
+  }
+  response->print(FPSTR(ecoChunk_DisplayInfoToggle_End)); // Rest des Toggle-HTMLs mit Beschreibung
   yield();
 
   // Rest der Seite (Warnung, Button, Ende)
@@ -5888,11 +5974,18 @@ void handleEcoUpdate(AsyncWebServerRequest *request) {
     steamDelayOverrideBySwitchEnabled = false;
   }
 
+  if (request->hasArg("ecoInfoDisplay")) {
+    ecoInfoOnDisplay = true;
+  } else {
+    ecoInfoOnDisplay = false;
+  }
+
   EEPROM.put(EEPROM_ADDR_ECOMODE_MINUTES, ecoModeMinutes);
   EEPROM.put(EEPROM_ADDR_ECOMODE_TEMP_WASSER, ecoModeTempWasser);
   EEPROM.put(EEPROM_ADDR_ECOMODE_TEMP_DAMPF, ecoModeTempDampf);
   EEPROM.put(EEPROM_ADDR_DYNAMIC_ECO_MODE, dynamicEcoActive);
   EEPROM.put(EEPROM_ADDR_STEAM_DELAY, dampfVerzoegerung);
+  EEPROM.put(EEPROM_ADDR_ECO_INFO_ON_DISPLAY, ecoInfoOnDisplay);
   EEPROM.commit();
 
   // Wenn Eco deaktiviert, Setpoints zurückladen
@@ -9078,7 +9171,14 @@ void handleDashboardData(AsyncWebServerRequest *request) {
          statusText = "Heizen...";
          statusKey = "heating";
     } else if (ecoModeMinutes > 0 && !ecoModeAktiv) { // Nur anzeigen wenn Timer gesetzt, aber nicht aktiv kühlt
-         statusText = "Bereit (Eco Timer: " + String(ecoModeMinutes) + "min)";
+         unsigned long elapsedMs = millis() - lastShotTime;
+         unsigned long ecoMs = (unsigned long)ecoModeMinutes * 60UL * 1000UL;
+         long remainingMs = (long)ecoMs - (long)elapsedMs;
+         int remainingMin = 0;
+         if (remainingMs > 0) {
+             remainingMin = (int)((remainingMs + 60000UL - 1) / 60000UL); // Aufrunden auf volle Minuten
+         }
+         statusText = "Bereit (Eco-Modus in " + String(remainingMin) + "min)";
          statusKey = "ready_eco_pending";
     }
     // Ansonsten bleibt statusText = "Bereit"
