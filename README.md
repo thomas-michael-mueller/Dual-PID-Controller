@@ -13,6 +13,7 @@ Konfiguration und Überwachung erfolgen bequem über eine moderne Weboberfläche
 **Sensorik erweitern** 
 - Drucksensor zur Brühdruckmessung fertig implementieren
 - Ultraschallsensor zur Wasserstandskontrolle implementieren
+- Einstellbares Pressure-Profiling
 
 ## Highlights
 - **Duale PID-Regelung** – präzise Temperatursteuerung für Wasser (Kessel/NTC) und Dampf (Thermoblock/MAX6675)
