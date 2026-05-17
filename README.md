@@ -1,3 +1,26 @@
+#Info zum aktuellen Stand:
+Dieses Projekt steckt inzwischen eigentlich schon in der Version 4.5.1.
+Dort sind bereits integriert:
+- Kein ESP8266-Support mehr
+- Integrierte Waage
+- Licht-Steuerung
+- Steuerung des Dampf-Bezugs via UI
+- Dampf-Timer im Display
+- Dampfbezug nach Zeit beenden
+- Funktion für Permanent-Heizen bei Dampf-Bezug
+- FlowGuard (Pumpensteuerung für Mindest-Durchlaufzeit)
+- Zusatz-Temperatursensor (Gehäuse oder Tassenablage)
+- Umbau auf Taster statt Schalter
+- Short-/Longpress-Aktionen für Taster
+.. und noch vieles mehr
+Aktuell schaffe ich es allerdings zeitlich nicht,
+mich um Updates hier auf GitHub zu kümmern.
+Daher: Falls Jemand großes Interesse am aktuellen Code,
+sowie einem PCB-Design für eine aktuelle Platinenversion hat,
+dann gerne Bescheid geben.
+Aber: Ich habe keine Zeit, viel Support zu geben - Daher bitte nur melden,
+wenn man sich auch selbst behelfen kann, was Löten, Teilebstellungen, Verkabelung, Programmierung, usw. angeht. ;-)
+
 # Dual-PID Controller
 
 **Präzision. Kontrolle. Perfekter Espresso.**
